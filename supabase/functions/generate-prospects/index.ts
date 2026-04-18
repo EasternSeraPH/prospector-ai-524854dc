@@ -13,6 +13,8 @@ interface RequestBody {
   location?: string;
   targetCount?: number;
   conditions?: string[];
+  /** Raw user-typed brief / conversation excerpt for full context. */
+  userBrief?: string;
 }
 
 // ~14 essential, high-quality fields per prospect.
@@ -83,6 +85,7 @@ Deno.serve(async (req: Request) => {
     const location = body.location?.trim() || "Global";
     const targetCount = Math.min(Math.max(body.targetCount ?? 10, 1), 60);
     const conditions = (body.conditions ?? []).filter(Boolean);
+    const userBrief = (body.userBrief ?? "").trim().slice(0, 4000);
 
     // Split into parallel chunks. Smaller chunks = faster per call + less truncation risk.
     const CHUNK_SIZE = 5;
@@ -94,28 +97,39 @@ Deno.serve(async (req: Request) => {
       remaining -= c;
     }
 
-    const systemPrompt = `You are an elite B2B sales intelligence analyst. You generate realistic, high-quality, internally consistent prospect data for sales prospecting.
+    const systemPrompt = `You are an elite B2B sales intelligence analyst. You generate realistic, high-quality, internally consistent prospect data that DIRECTLY answers the user's specific request.
 
-STRICT RULES:
-- Every company MUST genuinely fit the sector "${sector}" and location "${location}". No off-topic companies.
-- Honor every custom condition strictly: ${conditions.length ? conditions.join(" | ") : "(none)"}.
-- All data must be realistic and plausible (real-sounding company names, believable domains for emails — never "example.com", real cities within "${location}").
-- Tier classification based on the user's criteria above:
-  * A = perfect fit (fit_score 80-100)
-  * B = strong fit (fit_score 60-79)
-  * C = weaker but valid fit (fit_score 40-59)
-- Distribute roughly ~30% A, ~45% B, ~25% C across the full set.
-- fit_reasoning MUST explicitly reference the user's sector, location, and conditions.
-- recommended_outreach: 2-3 sentence personalized opening.
-- Arrays should have 2-5 items. No duplicates across companies.`;
+═══ THE USER'S ACTUAL REQUEST (verbatim, in their own words) ═══
+${userBrief || "(no free-text brief provided — rely only on the structured criteria below)"}
+═══════════════════════════════════════════════════════════════
 
-    const callChunk = async (count: number, chunkIdx: number, retry = false): Promise<any[]> => {
-      const userPrompt = `Generate exactly ${count} unique prospects for:
+═══ STRUCTURED CRITERIA ═══
 - Sector: ${sector}
 - Location: ${location}
-- Conditions: ${conditions.length ? conditions.join(", ") : "none"}
+- Target count: ${targetCount}
+- Conditions: ${conditions.length ? conditions.join(" | ") : "(none)"}
+═══════════════════════════
 
-This is batch ${chunkIdx + 1} of ${chunks.length}. Make these prospects different from any others. Return via the return_prospects tool with ALL schema fields populated.`;
+NON-NEGOTIABLE RULES:
+1. Read the user's verbatim request above CAREFULLY. Every prospect you generate MUST directly satisfy what they actually asked for — not a generic interpretation.
+2. If the user mentioned specific company sizes, technologies, business models, buyer personas, geographies, or any other constraint in their brief, EVERY prospect must match it.
+3. Companies must genuinely fit sector "${sector}" AND be located in/serve "${location}". No off-topic companies.
+4. Honor every condition strictly. If a condition conflicts with a generic match, the condition wins.
+5. Realistic data only: real-sounding company names, believable corporate email domains (never "example.com" / "test.com"), real cities within "${location}".
+6. Tier classification (apply consistently across the whole set):
+   - A = perfect match for the user's request (fit_score 80-100)
+   - B = strong match, minor gaps (fit_score 60-79)
+   - C = acceptable but weaker match (fit_score 40-59)
+   Target distribution: ~30% A, ~45% B, ~25% C.
+7. fit_reasoning MUST explicitly cite WHICH part of the user's request this prospect satisfies (e.g. "Matches your ask for Series-B SaaS firms in Berlin with >100 engineers").
+8. recommended_outreach: 2-3 sentences, personalized to the prospect AND tied to the user's stated goal.
+9. No duplicate company names across the full set.`;
+
+    const callChunk = async (count: number, chunkIdx: number, retry = false): Promise<any[]> => {
+      const userPrompt = `Generate exactly ${count} unique prospects that satisfy the user's request above.
+
+This is batch ${chunkIdx + 1} of ${chunks.length} — make these prospects distinct from the others.
+Return via the return_prospects tool with ALL schema fields populated.`;
 
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
