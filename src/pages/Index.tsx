@@ -1,6 +1,7 @@
 import { AppNav } from "@/components/AppNav";
 import { ChatView } from "@/components/chat/ChatView";
 import { JobsView } from "@/components/jobs/JobsView";
+import { N8nWebhookTester } from "@/components/dev/N8nWebhookTester";
 import { AppTabProvider, useAppTab } from "@/contexts/AppTabContext";
 import { ChatProvider } from "@/contexts/ChatContext";
 import { JobsProvider } from "@/contexts/JobsContext";
@@ -10,6 +11,7 @@ function AppShell() {
   return (
     <div className="min-h-screen bg-gradient-subtle">
       <AppNav />
+      <N8nWebhookTester />
       <main>
         <div className={tab === "chat" ? "block" : "hidden"}>
           <ChatView />
