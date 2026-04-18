@@ -35,11 +35,11 @@ export function N8nWebhookTester() {
   }
 
   return (
-    <div className="border-b bg-amber-50 dark:bg-amber-950/20">
+    <div className="border-b bg-muted/40">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 space-y-2">
         <div className="flex items-center gap-2 text-xs">
-          <Bug className="h-3.5 w-3.5 text-amber-600" />
-          <span className="font-semibold text-amber-900 dark:text-amber-200">
+          <Bug className="h-3.5 w-3.5 text-primary" />
+          <span className="font-semibold text-foreground">
             n8n webhook tester (temporary)
           </span>
           <code className="text-[10px] text-muted-foreground truncate hidden sm:inline">
@@ -65,7 +65,7 @@ export function N8nWebhookTester() {
               <span
                 className={
                   status === "ok"
-                    ? "font-medium text-green-700 dark:text-green-400"
+                    ? "font-medium text-primary"
                     : "font-medium text-destructive"
                 }
               >
