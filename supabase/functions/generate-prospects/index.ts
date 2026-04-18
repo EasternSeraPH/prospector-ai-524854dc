@@ -217,21 +217,23 @@ This is batch ${chunkIdx + 1} of ${chunks.length}. Make these prospects differen
       );
     }
 
-    const prospects = parsed.prospects ?? [];
+    const requestedTotal = targetCount;
     const summary = {
       total: prospects.length,
-      tierA: prospects.filter((p) => p.tier === "A").length,
-      tierB: prospects.filter((p) => p.tier === "B").length,
-      tierC: prospects.filter((p) => p.tier === "C").length,
+      requested: requestedTotal,
+      tierA: prospects.filter((p: any) => p.tier === "A").length,
+      tierB: prospects.filter((p: any) => p.tier === "B").length,
+      tierC: prospects.filter((p: any) => p.tier === "C").length,
       avgFitScore:
         prospects.length > 0
           ? Math.round(
-              prospects.reduce((acc, p) => acc + (p.fit_score ?? 0), 0) /
+              prospects.reduce((acc: number, p: any) => acc + (p.fit_score ?? 0), 0) /
                 prospects.length,
             )
           : 0,
       sector,
       location,
+      conditions,
       generatedAt: new Date().toISOString(),
     };
 
