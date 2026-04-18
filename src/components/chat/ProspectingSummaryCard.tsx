@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Building2, MapPin, Target, Sparkles, Database, Repeat, Loader2 } from "lucide-react";
+import { Building2, MapPin, Target, Sparkles, Database, Repeat, Loader2, Pencil, Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import type { ProspectingCriteria } from "@/types";
 import { generateProspects, downloadProspectsXlsx } from "@/lib/api/prospects";
@@ -13,7 +14,13 @@ import { useChat } from "@/contexts/ChatContext";
 interface Props extends ProspectingCriteria {}
 
 export function ProspectingSummaryCard(props: Props) {
-  const { industry = "—", geoArea = "—", targetCount = 0, metrics = [] } = props ?? {};
+  // Local, editable copy of the criteria so the user can fix missing/wrong values
+  // before generating the Excel or creating a recurrent job.
+  const [industry, setIndustry] = useState(props.industry || "");
+  const [geoArea, setGeoArea] = useState(props.geoArea || "");
+  const [targetCount, setTargetCount] = useState<number>(props.targetCount || 0);
+  const metrics = props.metrics ?? [];
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCreatingJob, setIsCreatingJob] = useState(false);
   const { addJob } = useJobs();
@@ -21,19 +28,25 @@ export function ProspectingSummaryCard(props: Props) {
   const { messages } = useChat();
 
   async function handleGenerate() {
+    if (!industry.trim() || !geoArea.trim()) {
+      toast.error("Please fill in industry and geographic area first.");
+      return;
+    }
     setIsGenerating(true);
     const toastId = toast.loading("Generating prospects with AI…", {
-      description: `Targeting ${targetCount} prospects in ${industry || "—"} (${geoArea || "—"}). This runs in parallel batches.`,
+      description: `Targeting ${targetCount} prospects in ${industry} (${geoArea}). This runs in parallel batches.`,
     });
     try {
-      // Build a verbatim brief from every user message so the AI sees the full request.
       const userBrief = messages
         .filter((m) => m.role === "user" && m.content.type === "text")
         .map((m) => (m.content.type === "text" ? m.content.text : ""))
         .filter(Boolean)
         .join("\n\n");
 
-      const result = await generateProspects(props, userBrief);
+      const result = await generateProspects(
+        { industry, geoArea, targetCount, metrics },
+        userBrief,
+      );
       downloadProspectsXlsx(result);
       toast.success("Excel file ready", {
         id: toastId,
@@ -48,6 +61,10 @@ export function ProspectingSummaryCard(props: Props) {
   }
 
   function handleCreateJob() {
+    if (!industry.trim() || !geoArea.trim()) {
+      toast.error("Please fill in industry and geographic area first.");
+      return;
+    }
     setIsCreatingJob(true);
     try {
       addJob({
@@ -76,15 +93,34 @@ export function ProspectingSummaryCard(props: Props) {
           </div>
           <div>
             <p className="text-sm font-semibold">Prospecting Summary</p>
-            <p className="text-xs text-muted-foreground">Review and confirm to proceed</p>
+            <p className="text-xs text-muted-foreground">Tap any field to edit, then confirm</p>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Field icon={<Building2 className="h-4 w-4" />} label="Industry" value={industry} />
-          <Field icon={<MapPin className="h-4 w-4" />} label="Geographic Area" value={geoArea} />
-          <Field icon={<Target className="h-4 w-4" />} label="Target Prospects" value={String(targetCount)} />
+          <EditableField
+            icon={<Building2 className="h-4 w-4" />}
+            label="Industry"
+            value={industry}
+            placeholder="e.g. SaaS"
+            onSave={setIndustry}
+          />
+          <EditableField
+            icon={<MapPin className="h-4 w-4" />}
+            label="Geographic Area"
+            value={geoArea}
+            placeholder="e.g. Berlin, DE"
+            onSave={setGeoArea}
+          />
+          <EditableField
+            icon={<Target className="h-4 w-4" />}
+            label="Target Prospects"
+            value={String(targetCount)}
+            placeholder="10"
+            type="number"
+            onSave={(v) => setTargetCount(Math.max(0, Number(v) || 0))}
+          />
         </div>
 
         {metrics.length > 0 && (
@@ -128,16 +164,100 @@ export function ProspectingSummaryCard(props: Props) {
   );
 }
 
-function Field({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+interface EditableFieldProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  placeholder?: string;
+  type?: "text" | "number";
+  onSave: (value: string) => void;
+}
+
+function EditableField({ icon, label, value, placeholder, type = "text", onSave }: EditableFieldProps) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+
+  function start() {
+    setDraft(value);
+    setEditing(true);
+  }
+  function commit() {
+    onSave(draft.trim());
+    setEditing(false);
+  }
+  function cancel() {
+    setDraft(value);
+    setEditing(false);
+  }
+
+  const isEmpty = !value || value === "—" || value === "0";
+
   return (
-    <div className="rounded-lg border bg-muted/30 p-3 space-y-1">
-      <div className="flex items-center gap-1.5 text-muted-foreground">
-        {icon}
-        <span className="text-xs font-medium">{label}</span>
+    <div className="rounded-lg border bg-muted/30 p-3 space-y-1 group">
+      <div className="flex items-center justify-between gap-1.5 text-muted-foreground">
+        <div className="flex items-center gap-1.5 min-w-0">
+          {icon}
+          <span className="text-xs font-medium truncate">{label}</span>
+        </div>
+        {!editing && (
+          <button
+            type="button"
+            onClick={start}
+            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+            aria-label={`Edit ${label}`}
+          >
+            <Pencil className="h-3 w-3" />
+          </button>
+        )}
       </div>
-      <p className="text-sm font-semibold text-foreground truncate" title={value}>
-        {value}
-      </p>
+
+      {editing ? (
+        <div className="flex items-center gap-1">
+          <Input
+            autoFocus
+            type={type}
+            value={draft}
+            placeholder={placeholder}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commit();
+              if (e.key === "Escape") cancel();
+            }}
+            className="h-7 text-sm px-2"
+          />
+          <button
+            type="button"
+            onClick={commit}
+            className="text-success hover:opacity-80"
+            aria-label="Save"
+          >
+            <Check className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={cancel}
+            className="text-muted-foreground hover:text-foreground"
+            aria-label="Cancel"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={start}
+          className="text-left w-full"
+          title="Click to edit"
+        >
+          <p
+            className={`text-sm font-semibold truncate ${
+              isEmpty ? "text-muted-foreground italic" : "text-foreground"
+            }`}
+          >
+            {isEmpty ? placeholder ?? "—" : value}
+          </p>
+        </button>
+      )}
     </div>
   );
 }
