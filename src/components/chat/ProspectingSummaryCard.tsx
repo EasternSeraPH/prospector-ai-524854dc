@@ -8,6 +8,7 @@ import type { ProspectingCriteria } from "@/types";
 import { generateProspects, downloadProspectsXlsx } from "@/lib/api/prospects";
 import { useJobs } from "@/contexts/JobsContext";
 import { useAppTab } from "@/contexts/AppTabContext";
+import { useChat } from "@/contexts/ChatContext";
 
 interface Props extends ProspectingCriteria {}
 
@@ -17,6 +18,7 @@ export function ProspectingSummaryCard(props: Props) {
   const [isCreatingJob, setIsCreatingJob] = useState(false);
   const { addJob } = useJobs();
   const { setTab } = useAppTab();
+  const { messages } = useChat();
 
   async function handleGenerate() {
     setIsGenerating(true);
@@ -24,7 +26,14 @@ export function ProspectingSummaryCard(props: Props) {
       description: `Targeting ${targetCount} prospects in ${industry || "—"} (${geoArea || "—"}). This runs in parallel batches.`,
     });
     try {
-      const result = await generateProspects(props);
+      // Build a verbatim brief from every user message so the AI sees the full request.
+      const userBrief = messages
+        .filter((m) => m.role === "user" && m.content.type === "text")
+        .map((m) => (m.content.type === "text" ? m.content.text : ""))
+        .filter(Boolean)
+        .join("\n\n");
+
+      const result = await generateProspects(props, userBrief);
       downloadProspectsXlsx(result);
       toast.success("Excel file ready", {
         id: toastId,

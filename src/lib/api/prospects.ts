@@ -38,6 +38,7 @@ export interface GenerateProspectsResult {
 
 export async function generateProspects(
   criteria: ProspectingCriteria,
+  userBrief?: string,
 ): Promise<GenerateProspectsResult> {
   const { data, error } = await supabase.functions.invoke("generate-prospects", {
     body: {
@@ -45,6 +46,7 @@ export async function generateProspects(
       location: criteria.geoArea,
       targetCount: criteria.targetCount,
       conditions: criteria.metrics,
+      userBrief,
     },
   });
 
