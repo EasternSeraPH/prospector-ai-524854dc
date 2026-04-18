@@ -4,44 +4,20 @@ import type { ProspectingCriteria } from "@/types";
 
 export interface Prospect {
   company_name: string;
-  legal_name?: string;
   industry: string;
-  sub_industry?: string;
-  description?: string;
-  founded_year?: number;
+  description: string;
   headquarters_city: string;
-  headquarters_country?: string;
-  full_address?: string;
-  website?: string;
-  linkedin_url?: string;
+  headquarters_country: string;
+  website: string;
   employee_count: number;
-  employee_range?: string;
   annual_revenue_usd?: number;
-  revenue_range?: string;
-  funding_stage?: string;
-  total_funding_usd?: number;
-  last_funding_round?: string;
-  tech_stack?: string[];
-  recent_news?: string;
-  growth_signals?: string[];
-  hiring_signals?: string;
-  intent_signals?: string;
-  competitors?: string[];
   contact_name: string;
-  contact_role?: string;
+  contact_role: string;
   contact_email: string;
-  contact_phone?: string;
-  contact_linkedin?: string;
-  decision_maker_persona?: string;
-  pain_points?: string[];
-  budget_range?: string;
-  sales_cycle_estimate?: string;
-  preferred_channel?: string;
-  recommended_outreach?: string;
   tier: "A" | "B" | "C";
   fit_score: number;
   fit_reasoning: string;
-  priority?: "High" | "Medium" | "Low";
+  recommended_outreach: string;
 }
 
 export interface GenerateProspectsResult {
@@ -81,43 +57,19 @@ export async function generateProspects(
 const FIELD_ORDER: Array<{ key: keyof Prospect; label: string }> = [
   { key: "tier", label: "Tier" },
   { key: "fit_score", label: "Fit Score" },
-  { key: "priority", label: "Priority" },
   { key: "company_name", label: "Company" },
-  { key: "legal_name", label: "Legal Name" },
   { key: "industry", label: "Industry" },
-  { key: "sub_industry", label: "Sub-Industry" },
   { key: "description", label: "Description" },
-  { key: "founded_year", label: "Founded" },
   { key: "headquarters_city", label: "City" },
   { key: "headquarters_country", label: "Country" },
-  { key: "full_address", label: "Address" },
   { key: "website", label: "Website" },
-  { key: "linkedin_url", label: "LinkedIn" },
   { key: "employee_count", label: "Employees" },
-  { key: "employee_range", label: "Employee Range" },
   { key: "annual_revenue_usd", label: "Revenue (USD)" },
-  { key: "revenue_range", label: "Revenue Range" },
-  { key: "funding_stage", label: "Funding Stage" },
-  { key: "total_funding_usd", label: "Total Funding (USD)" },
-  { key: "last_funding_round", label: "Last Round" },
-  { key: "tech_stack", label: "Tech Stack" },
-  { key: "competitors", label: "Competitors" },
-  { key: "growth_signals", label: "Growth Signals" },
-  { key: "hiring_signals", label: "Hiring Signals" },
-  { key: "intent_signals", label: "Intent Signals" },
-  { key: "recent_news", label: "Recent News" },
   { key: "contact_name", label: "Contact" },
   { key: "contact_role", label: "Role" },
   { key: "contact_email", label: "Email" },
-  { key: "contact_phone", label: "Phone" },
-  { key: "contact_linkedin", label: "Contact LinkedIn" },
-  { key: "decision_maker_persona", label: "Persona" },
-  { key: "pain_points", label: "Pain Points" },
-  { key: "budget_range", label: "Budget" },
-  { key: "sales_cycle_estimate", label: "Sales Cycle" },
-  { key: "preferred_channel", label: "Channel" },
-  { key: "recommended_outreach", label: "Recommended Outreach" },
   { key: "fit_reasoning", label: "Fit Reasoning" },
+  { key: "recommended_outreach", label: "Recommended Outreach" },
 ];
 
 function normalize(value: unknown): string | number {
