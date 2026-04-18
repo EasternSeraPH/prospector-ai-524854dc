@@ -48,12 +48,14 @@ export interface GenerateProspectsResult {
   prospects: Prospect[];
   summary: {
     total: number;
+    requested: number;
     tierA: number;
     tierB: number;
     tierC: number;
     avgFitScore: number;
     sector: string;
     location: string;
+    conditions: string[];
     generatedAt: string;
   };
 }
@@ -145,8 +147,10 @@ export function downloadProspectsXlsx(result: GenerateProspectsResult) {
     ["Generated at", new Date(summary.generatedAt).toLocaleString()],
     ["Sector", summary.sector],
     ["Location", summary.location],
+    ["Conditions", (summary.conditions ?? []).join(", ") || "—"],
     ["", ""],
-    ["Total prospects", summary.total],
+    ["Requested", summary.requested],
+    ["Delivered", summary.total],
     ["Average fit score", summary.avgFitScore],
     ["Tier A (hot)", summary.tierA],
     ["Tier B (warm)", summary.tierB],
