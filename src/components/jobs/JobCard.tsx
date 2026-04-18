@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import type { Job } from "@/types";
 import { useJobs } from "@/contexts/JobsContext";
+import { EditJobDialog } from "./EditJobDialog";
 
 interface Props {
   job: Job;
@@ -24,6 +25,7 @@ function formatDate(iso: string | null) {
 export function JobCard({ job }: Props) {
   const { updateJob } = useJobs();
   const [busy, setBusy] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   function handleToggle(checked: boolean) {
     updateJob(job.id, { status: checked ? "active" : "paused" });
@@ -36,10 +38,6 @@ export function JobCard({ job }: Props) {
       description: "It will appear here once the first run completes.",
     });
     setTimeout(() => setBusy(false), 400);
-  }
-
-  function handleEdit() {
-    toast.info("Edit configuration", { description: "Inline editing coming soon." });
   }
 
   const isActive = job.status === "active";
@@ -105,12 +103,14 @@ export function JobCard({ job }: Props) {
             <FileText className="h-4 w-4" />
             View Latest News Report
           </Button>
-          <Button variant="outline" size="sm" className="flex-1" onClick={handleEdit}>
+          <Button variant="outline" size="sm" className="flex-1" onClick={() => setEditOpen(true)}>
             <Settings2 className="h-4 w-4" />
-            Edit Configuration
+            Quick Edit
           </Button>
         </div>
       </CardContent>
+
+      <EditJobDialog job={job} open={editOpen} onOpenChange={setEditOpen} />
     </Card>
   );
 }
