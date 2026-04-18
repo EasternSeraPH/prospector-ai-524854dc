@@ -12,7 +12,7 @@ import { useAppTab } from "@/contexts/AppTabContext";
 interface Props extends ProspectingCriteria {}
 
 export function ProspectingSummaryCard(props: Props) {
-  const { industry, geoArea, targetCount, metrics } = props;
+  const { industry = "—", geoArea = "—", targetCount = 0, metrics = [] } = props ?? {};
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCreatingJob, setIsCreatingJob] = useState(false);
   const { addJob } = useJobs();
