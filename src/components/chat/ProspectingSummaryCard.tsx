@@ -21,7 +21,7 @@ export function ProspectingSummaryCard(props: Props) {
   async function handleGenerate() {
     setIsGenerating(true);
     const toastId = toast.loading("Generating prospects with AI…", {
-      description: "This may take 20–40 seconds for rich, classified data.",
+      description: `Targeting ${targetCount} prospects in ${industry || "—"} (${geoArea || "—"}). This runs in parallel batches.`,
     });
     try {
       const result = await generateProspects(props);
