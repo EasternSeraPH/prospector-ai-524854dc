@@ -16,10 +16,42 @@ export interface GenerateDatabaseResult {
  * @param criteria The structured search criteria from the chat card.
  * @returns The Google Sheet URL and number of rows exported.
  */
+const GENERATE_DATABASE_WEBHOOK_URL =
+  "https://zephyr6352.app.n8n.cloud/webhook-test/f1b4e37b-c99f-48c2-9409-cf05afde38e3";
+
 export async function triggerGenerateDatabaseWebhook(
-  _criteria: ProspectingCriteria,
+  criteria: ProspectingCriteria,
 ): Promise<GenerateDatabaseResult> {
-  throw new Error("Not implemented: wire to your n8n 'Generate Database' webhook.");
+  const { industry = "", geoArea = "", targetCount = 0, metrics = [] } = criteria ?? {};
+
+  const payload = {
+    sector: industry,
+    location: geoArea,
+    targetCount,
+    conditions: metrics,
+  };
+
+  const res = await fetch(GENERATE_DATABASE_WEBHOOK_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Webhook returned ${res.status} ${res.statusText}`);
+  }
+
+  let data: Partial<GenerateDatabaseResult> = {};
+  try {
+    data = await res.json();
+  } catch {
+    // n8n may return an empty body; that's fine.
+  }
+
+  return {
+    sheetUrl: data.sheetUrl ?? "",
+    rowsExported: data.rowsExported ?? 0,
+  };
 }
 
 /**
