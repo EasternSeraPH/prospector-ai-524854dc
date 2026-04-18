@@ -128,31 +128,55 @@ Rules:
 
 Return them via the return_prospects tool. Include ALL fields in the schema for every prospect — be thorough and creative.`;
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "return_prospects",
-              description: "Return the generated, classified prospect list.",
-              parameters: PROSPECT_SCHEMA,
+    const callModel = (model: string) =>
+      fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "return_prospects",
+                description: "Return the generated, classified prospect list.",
+                parameters: PROSPECT_SCHEMA,
+              },
             },
-          },
-        ],
-        tool_choice: { type: "function", function: { name: "return_prospects" } },
-      }),
-    });
+          ],
+          tool_choice: { type: "function", function: { name: "return_prospects" } },
+        }),
+      });
+
+    // Flash is faster and far more reliable for tool calls. Fall back to Pro on 5xx.
+    let aiRes = await callModel("google/gemini-2.5-flash");
+    if (aiRes.status >= 500) {
+      console.warn("Flash returned", aiRes.status, "— retrying with Pro");
+      aiRes = await callModel("google/gemini-2.5-pro");
+    }
+
+    // Detect in-payload provider errors (gateway returns 200 but provider failed mid-stream)
+    if (aiRes.ok) {
+      const cloned = aiRes.clone();
+      try {
+        const peek = await cloned.json();
+        const choiceErr = peek?.choices?.[0]?.error;
+        const hasTool = peek?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+        if (choiceErr && !hasTool) {
+          console.warn("Provider error in payload, retrying with Pro:", choiceErr);
+          aiRes = await callModel("google/gemini-2.5-pro");
+        }
+      } catch {
+        // ignore — main parse below will handle it
+      }
+    }
 
     if (!aiRes.ok) {
       const errText = await aiRes.text().catch(() => "");
