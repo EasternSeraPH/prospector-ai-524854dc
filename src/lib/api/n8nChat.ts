@@ -7,7 +7,7 @@ import type { Message, MessageContent, ProspectingCriteria } from "@/types";
  */
 
 export const N8N_CHAT_WEBHOOK_URL =
-  "https://zephyr6352.app.n8n.cloud/webhook-test/chat";
+  "https://zephyr6352.app.n8n.cloud/webhook/chat";
 
 export interface N8nChatPayload {
   conversationId: string;
