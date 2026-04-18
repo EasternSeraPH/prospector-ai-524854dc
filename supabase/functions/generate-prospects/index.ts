@@ -15,6 +15,7 @@ interface RequestBody {
   conditions?: string[];
 }
 
+// ~14 essential, high-quality fields per prospect.
 const PROSPECT_SCHEMA = {
   type: "object",
   properties: {
@@ -23,62 +24,37 @@ const PROSPECT_SCHEMA = {
       items: {
         type: "object",
         properties: {
-          // Core company
           company_name: { type: "string" },
-          legal_name: { type: "string" },
           industry: { type: "string" },
-          sub_industry: { type: "string" },
-          description: { type: "string" },
-          founded_year: { type: "integer" },
+          description: { type: "string", description: "1-2 sentences about what the company does" },
           headquarters_city: { type: "string" },
           headquarters_country: { type: "string" },
-          full_address: { type: "string" },
           website: { type: "string" },
-          linkedin_url: { type: "string" },
-          // Size & financials
           employee_count: { type: "integer" },
-          employee_range: { type: "string" },
-          annual_revenue_usd: { type: "integer" },
-          revenue_range: { type: "string" },
-          funding_stage: { type: "string" },
-          total_funding_usd: { type: "integer" },
-          last_funding_round: { type: "string" },
-          // Tech & signals
-          tech_stack: { type: "array", items: { type: "string" } },
-          recent_news: { type: "string" },
-          growth_signals: { type: "array", items: { type: "string" } },
-          hiring_signals: { type: "string" },
-          intent_signals: { type: "string" },
-          competitors: { type: "array", items: { type: "string" } },
-          // Decision maker
-          contact_name: { type: "string" },
+          annual_revenue_usd: { type: "integer", description: "Estimated yearly revenue in USD" },
+          contact_name: { type: "string", description: "Realistic decision-maker full name" },
           contact_role: { type: "string" },
-          contact_email: { type: "string" },
-          contact_phone: { type: "string" },
-          contact_linkedin: { type: "string" },
-          decision_maker_persona: { type: "string" },
-          // Sales context
-          pain_points: { type: "array", items: { type: "string" } },
-          budget_range: { type: "string" },
-          sales_cycle_estimate: { type: "string" },
-          preferred_channel: { type: "string" },
-          recommended_outreach: { type: "string" },
-          // Classification
+          contact_email: { type: "string", description: "Believable corporate email" },
           tier: { type: "string", enum: ["A", "B", "C"] },
-          fit_score: { type: "integer" },
-          fit_reasoning: { type: "string" },
-          priority: { type: "string", enum: ["High", "Medium", "Low"] },
+          fit_score: { type: "integer", description: "0-100" },
+          fit_reasoning: { type: "string", description: "1-2 sentences referencing the user's criteria" },
+          recommended_outreach: { type: "string", description: "2-3 sentence personalized opening" },
         },
         required: [
           "company_name",
           "industry",
+          "description",
           "headquarters_city",
+          "headquarters_country",
+          "website",
           "employee_count",
           "contact_name",
+          "contact_role",
           "contact_email",
           "tier",
           "fit_score",
           "fit_reasoning",
+          "recommended_outreach",
         ],
         additionalProperties: false,
       },
