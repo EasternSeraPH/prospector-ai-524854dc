@@ -1,7 +1,7 @@
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useChat } from "@/contexts/ChatContext";
-import { sendMessageToBedrock } from "@/lib/api/bedrock";
+import { sendMessageToN8n } from "@/lib/api/n8nChat";
 import { ChatComposer } from "./ChatComposer";
 import { EmptyChatState } from "./EmptyChatState";
 import { MessageList } from "./MessageList";
@@ -18,7 +18,7 @@ export function ChatView() {
     setIsSending(true);
 
     try {
-      const res = await sendMessageToBedrock({
+      const res = await sendMessageToN8n({
         conversationId: "default",
         message: text,
         history: messages,
