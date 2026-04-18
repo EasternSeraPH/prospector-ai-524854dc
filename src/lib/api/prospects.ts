@@ -48,12 +48,14 @@ export interface GenerateProspectsResult {
   prospects: Prospect[];
   summary: {
     total: number;
+    requested: number;
     tierA: number;
     tierB: number;
     tierC: number;
     avgFitScore: number;
     sector: string;
     location: string;
+    conditions: string[];
     generatedAt: string;
   };
 }
