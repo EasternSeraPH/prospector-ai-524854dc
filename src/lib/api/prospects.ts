@@ -4,44 +4,20 @@ import type { ProspectingCriteria } from "@/types";
 
 export interface Prospect {
   company_name: string;
-  legal_name?: string;
   industry: string;
-  sub_industry?: string;
-  description?: string;
-  founded_year?: number;
+  description: string;
   headquarters_city: string;
-  headquarters_country?: string;
-  full_address?: string;
-  website?: string;
-  linkedin_url?: string;
+  headquarters_country: string;
+  website: string;
   employee_count: number;
-  employee_range?: string;
   annual_revenue_usd?: number;
-  revenue_range?: string;
-  funding_stage?: string;
-  total_funding_usd?: number;
-  last_funding_round?: string;
-  tech_stack?: string[];
-  recent_news?: string;
-  growth_signals?: string[];
-  hiring_signals?: string;
-  intent_signals?: string;
-  competitors?: string[];
   contact_name: string;
-  contact_role?: string;
+  contact_role: string;
   contact_email: string;
-  contact_phone?: string;
-  contact_linkedin?: string;
-  decision_maker_persona?: string;
-  pain_points?: string[];
-  budget_range?: string;
-  sales_cycle_estimate?: string;
-  preferred_channel?: string;
-  recommended_outreach?: string;
   tier: "A" | "B" | "C";
   fit_score: number;
   fit_reasoning: string;
-  priority?: "High" | "Medium" | "Low";
+  recommended_outreach: string;
 }
 
 export interface GenerateProspectsResult {

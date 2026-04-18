@@ -85,7 +85,7 @@ Deno.serve(async (req: Request) => {
     const conditions = (body.conditions ?? []).filter(Boolean);
 
     // Split into parallel chunks. Smaller chunks = faster per call + less truncation risk.
-    const CHUNK_SIZE = 8;
+    const CHUNK_SIZE = 5;
     const chunks: number[] = [];
     let remaining = targetCount;
     while (remaining > 0) {
