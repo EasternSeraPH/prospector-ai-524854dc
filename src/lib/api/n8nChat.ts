@@ -15,6 +15,30 @@ export interface N8nChatPayload {
   history: Message[];
 }
 
+const SESSION_STORAGE_KEY = "n8n_chat_session_id";
+
+/**
+ * Returns a stable, unique sessionId for the current browser/user.
+ * Persisted in localStorage so the same user keeps the same id across reloads.
+ */
+export function getOrCreateSessionId(): string {
+  if (typeof window === "undefined") {
+    return `user_${Math.random().toString(36).slice(2, 12)}`;
+  }
+  try {
+    const existing = window.localStorage.getItem(SESSION_STORAGE_KEY);
+    if (existing) return existing;
+    const generated =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? `user_${crypto.randomUUID()}`
+        : `user_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    window.localStorage.setItem(SESSION_STORAGE_KEY, generated);
+    return generated;
+  } catch {
+    return `user_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  }
+}
+
 export interface N8nChatResponse {
   content: MessageContent;
 }
@@ -89,10 +113,12 @@ function coerceToMessageContent(raw: unknown): MessageContent {
 export async function sendMessageToN8n(
   payload: N8nChatPayload,
 ): Promise<N8nChatResponse> {
+  const sessionId = getOrCreateSessionId();
   const res = await fetch(N8N_CHAT_WEBHOOK_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
+      sessionId,
       conversationId: payload.conversationId,
       message: payload.message,
       history: payload.history.map((m) => ({
