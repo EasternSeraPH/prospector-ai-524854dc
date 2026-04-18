@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Building2, MapPin, Target, Sparkles, Database, Repeat, Loader2, Pencil, Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -177,6 +177,11 @@ function EditableField({ icon, label, value, placeholder, type = "text", onSave 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
 
+  // Keep draft in sync if the parent value changes (e.g. another field was edited and re-render happened).
+  useEffect(() => {
+    if (!editing) setDraft(value);
+  }, [value, editing]);
+
   function start() {
     setDraft(value);
     setEditing(true);
@@ -190,7 +195,8 @@ function EditableField({ icon, label, value, placeholder, type = "text", onSave 
     setEditing(false);
   }
 
-  const isEmpty = !value || value === "—" || value === "0";
+  const trimmed = (value ?? "").trim();
+  const isEmpty = !trimmed || trimmed === "—";
 
   return (
     <div className="rounded-lg border bg-muted/30 p-3 space-y-1 group">
@@ -203,7 +209,7 @@ function EditableField({ icon, label, value, placeholder, type = "text", onSave 
           <button
             type="button"
             onClick={start}
-            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+            className="opacity-60 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
             aria-label={`Edit ${label}`}
           >
             <Pencil className="h-3 w-3" />
@@ -223,11 +229,16 @@ function EditableField({ icon, label, value, placeholder, type = "text", onSave 
               if (e.key === "Enter") commit();
               if (e.key === "Escape") cancel();
             }}
+            onBlur={commit}
             className="h-7 text-sm px-2"
           />
           <button
             type="button"
-            onClick={commit}
+            onMouseDown={(e) => {
+              // prevent blur firing before click handler
+              e.preventDefault();
+              commit();
+            }}
             className="text-success hover:opacity-80"
             aria-label="Save"
           >
@@ -235,7 +246,10 @@ function EditableField({ icon, label, value, placeholder, type = "text", onSave 
           </button>
           <button
             type="button"
-            onClick={cancel}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              cancel();
+            }}
             className="text-muted-foreground hover:text-foreground"
             aria-label="Cancel"
           >
