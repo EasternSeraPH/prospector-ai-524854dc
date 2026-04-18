@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import type { ProspectingCriteria } from "@/types";
-import { triggerGenerateDatabaseWebhook } from "@/lib/api/n8n";
+import { generateProspects, downloadProspectsXlsx } from "@/lib/api/prospects";
 import { useJobs } from "@/contexts/JobsContext";
 import { useAppTab } from "@/contexts/AppTabContext";
 
@@ -20,14 +20,19 @@ export function ProspectingSummaryCard(props: Props) {
 
   async function handleGenerate() {
     setIsGenerating(true);
+    const toastId = toast.loading("Generating prospects with AI…", {
+      description: "This may take 20–40 seconds for rich, classified data.",
+    });
     try {
-      const res = await triggerGenerateDatabaseWebhook(props);
-      toast.success("Database generated", {
-        description: `Exported ${res.rowsExported} prospects to Google Sheets.`,
+      const result = await generateProspects(props);
+      downloadProspectsXlsx(result);
+      toast.success("Excel file ready", {
+        id: toastId,
+        description: `${result.summary.total} prospects classified (A: ${result.summary.tierA}, B: ${result.summary.tierB}, C: ${result.summary.tierC}). Download started.`,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Something went wrong";
-      toast.error("Couldn't generate the database", { description: message });
+      toast.error("Couldn't generate prospects", { id: toastId, description: message });
     } finally {
       setIsGenerating(false);
     }
@@ -97,7 +102,7 @@ export function ProspectingSummaryCard(props: Props) {
             ) : (
               <Database className="h-4 w-4" />
             )}
-            Generate Database & Export to Google Sheets
+            {isGenerating ? "Generating…" : "Generate Prospects & Download Excel"}
           </Button>
           <Button
             onClick={handleCreateJob}

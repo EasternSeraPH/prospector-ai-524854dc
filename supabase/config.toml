@@ -1,0 +1,4 @@
+project_id = "grcjgepjqeorifzzksen"
+
+[functions.generate-prospects]
+verify_jwt = false
